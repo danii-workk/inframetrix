@@ -1,0 +1,19 @@
+rules:
+  - id: security-todo
+    title: Security TODO detected
+    severity: medium
+    category: ai-slop
+    match_mode: case_insensitive_contains
+    patterns:
+      - "TODO auth"
+      - "TODO: auth"
+      - "TODO authorization"
+      - "FIXME security"
+      - "disable auth"
+      - "skip auth"
+      - "temporary auth"
+      - "auth later"
+      - "security later"
+    message: "Found security-related TODO/FIXME marker."
+    recommendation: "Replace temporary security logic with a real control before production."
+    confidence: medium

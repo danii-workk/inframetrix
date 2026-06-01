@@ -1,0 +1,39 @@
+rules:
+  - id: permissive-cors-origin
+    title: Permissive CORS configuration
+    severity: high
+    category: cors
+    patterns:
+      - "origin: '*'"
+      - 'origin: "*"'
+    message: "CORS wildcard origin detected."
+    recommendation: "Restrict CORS origins to trusted domains."
+    confidence: high
+
+  - id: permissive-cors-header
+    title: Permissive CORS configuration
+    severity: high
+    category: cors
+    patterns:
+      - "Access-Control-Allow-Origin: *"
+    message: "CORS wildcard header detected."
+    recommendation: "Restrict CORS origins to trusted domains."
+    confidence: high
+
+  - id: frontend-only-auth-hint
+    title: Frontend-only authorization hint
+    severity: high
+    category: auth
+    patterns:
+      - 'localStorage.getItem("role")'
+      - "localStorage.getItem('role')"
+      - 'localStorage.getItem("isAdmin")'
+      - "localStorage.getItem('isAdmin')"
+      - 'sessionStorage.getItem("role")'
+      - "sessionStorage.getItem('role')"
+    message: "Client-side role/admin check detected."
+    recommendation: "Enforce authorization on the server side for every sensitive action."
+    confidence: medium
+    languages:
+      - javascript
+      - typescript
