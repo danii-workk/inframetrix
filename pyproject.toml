@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "inframetrix"
 version = "0.1.0"
@@ -6,7 +10,22 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
-  { name = "Danii-workk" }
+  { name = "Danii-workk", email = "danii-workk@users.noreply.github.com" }
+]
+keywords = ["security", "analyzer", "infrastructure", "ai", "devops", "scanner", "risk"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security",
+  "Topic :: Software Development :: Quality Assurance",
+  "Typing :: Typed",
 ]
 dependencies = [
   "typer>=0.12.0",
@@ -23,6 +42,11 @@ dev = [
 
 [project.scripts]
 inframetrix = "inframetrix.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/danii-workk/inframetrix"
+Repository = "https://github.com/danii-workk/inframetrix"
+Issues = "https://github.com/danii-workk/inframetrix/issues"
 
 [tool.ruff]
 line-length = 100

@@ -1,0 +1,83 @@
+rules:
+  # --- Python dependencies ---
+  - id: python-requirements-no-pins
+    title: Unpinned Python dependencies
+    severity: medium
+    category: dependency
+    file_patterns:
+      - "requirements.txt"
+    message: "Python dependencies found in requirements.txt without version pins."
+    recommendation: "Pin all dependencies with == (e.g. requests==2.31.0) for reproducible builds."
+    confidence: low
+
+  - id: python-setup-py-deprecated
+    title: setup.py detected
+    severity: low
+    category: dependency
+    file_patterns:
+      - "setup.py"
+    message: "setup.py is deprecated in favor of pyproject.toml."
+    recommendation: "Migrate to pyproject.toml for modern Python packaging."
+    confidence: high
+
+  # --- JavaScript/Node dependencies ---
+  - id: npm-dev-dep-in-prod
+    title: Potential dev dependency in production
+    severity: medium
+    category: dependency
+    patterns:
+      - '"devDependencies"'
+    file_patterns:
+      - "package.json"
+    message: "devDependencies section detected. Ensure these are not deployed to production."
+    recommendation: "Use npm ci --omit=dev in production builds."
+    confidence: low
+
+  - id: npm-caret-version
+    title: Caret version ranges in package.json
+    severity: low
+    category: dependency
+    patterns:
+      - '"^'
+    file_patterns:
+      - "package.json"
+    message: "Caret (^) version ranges allow unexpected updates."
+    recommendation: "Consider using exact versions or lock files for reproducible builds."
+    confidence: low
+
+  # --- Lock file checks ---
+  - id: missing-lock-file
+    title: No lock file detected
+    severity: medium
+    category: dependency
+    file_patterns:
+      - "package.json"
+    message: "package.json found without a corresponding package-lock.json or yarn.lock."
+    recommendation: "Commit a lock file (package-lock.json, yarn.lock, pnpm-lock.yaml) for deterministic installs."
+    confidence: medium
+
+  # --- Dangerous packages ---
+  - id: npm-underscore-deprecated
+    title: Deprecated underscore dependency
+    severity: low
+    category: dependency
+    patterns:
+      - '"underscore"'
+    file_patterns:
+      - "package.json"
+    message: "The 'underscore' package is deprecated."
+    recommendation: "Use native JavaScript methods or 'lodash-es' instead."
+    confidence: high
+
+  - id: python-requests-verify-false
+    title: SSL verification disabled
+    severity: critical
+    category: dependency
+    patterns:
+      - "verify=False"
+      - "verify = False"
+    message: "SSL certificate verification is disabled."
+    recommendation: "Never disable SSL verification in production. Fix certificate issues instead."
+    confidence: high
+    languages:
+      - python

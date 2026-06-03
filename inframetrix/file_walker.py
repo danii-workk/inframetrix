@@ -35,26 +35,38 @@ SCANNED_EXTENSIONS: set[str] = {
     ".example",
     ".txt",
     ".md",
+    ".conf",
+    ".cfg",
+    ".ini",
 }
 
 EXPLICIT_FILES: set[str] = {
     "Dockerfile",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    "compose.yml",
+    "compose.yaml",
+    "package.json",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "requirements.txt",
+    "setup.py",
+    "setup.cfg",
+    "pyproject.toml",
+    "nginx.conf",
     ".env",
     ".env.local",
     ".env.production",
     ".env.development",
     ".env.example",
-    "docker-compose.yml",
-    "package.json",
-    "requirements.txt",
-    "pyproject.toml",
+    ".dockerignore",
 }
 
 EXCLUDED_FILES: set[str] = {
     "inframetrix-report.json",
     "inframetrix-report.md",
 }
-
 
 def collect_files(project_path: Path) -> list[Path]:
     """Collect scannable files from a project directory."""
@@ -77,6 +89,11 @@ def collect_files(project_path: Path) -> list[Path]:
 
         # Include by explicit filename
         if name in EXPLICIT_FILES:
+            files.append(item)
+            continue
+
+        # Include Dockerfiles (Dockerfile.dev, Dockerfile.prod, etc.)
+        if name.startswith("Dockerfile"):
             files.append(item)
             continue
 

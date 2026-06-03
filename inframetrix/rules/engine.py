@@ -66,12 +66,19 @@ def _evaluate_rule(
     """Evaluate a single rule against files."""
     findings: list[Finding] = []
 
+    has_file_patterns = bool(rule.file_patterns)
+    has_patterns = bool(rule.patterns)
+
     for fp in files:
         name = fp.name
 
-        # File-level rules: match filename against file_patterns
-        if rule.file_patterns:
-            if _file_matches_patterns(fp, rule.file_patterns):
+        # Check if file matches the file_patterns filter (if any)
+        file_filter_match = has_file_patterns and _file_matches_patterns(fp, rule.file_patterns)
+
+        # Case 1: File-level rule (file_patterns only, no content patterns)
+        # Fires when the filename matches, regardless of content
+        if has_file_patterns and not has_patterns:
+            if file_filter_match:
                 findings.append(
                     Finding(
                         id=rule.id,
@@ -84,39 +91,42 @@ def _evaluate_rule(
                         confidence=rule.confidence,
                     )
                 )
-                continue  # file rule matched, skip content scan for this rule+file
+            continue
 
-        # Content rules: match patterns against file content
-        if rule.patterns:
-            # Language filter
-            if rule.languages:
-                lang = _detect_language(fp)
-                if lang not in rule.languages:
-                    continue
+        # Case 2: Content rule with optional file filter (has patterns)
+        # If file_patterns exist, file must match the filter first
+        if has_file_patterns and not file_filter_match:
+            continue
 
-            content = read_text_fn(fp)
-            if content is None:
+        # Language filter
+        if rule.languages:
+            lang = _detect_language(fp)
+            if lang not in rule.languages:
                 continue
 
-            compiled = [_compile_pattern(p, rule.match_mode) for p in rule.patterns]
-            lines = content.splitlines()
+        content = read_text_fn(fp)
+        if content is None:
+            continue
 
-            for lineno, line in enumerate(lines, start=1):
-                for pat in compiled:
-                    if pat.search(line):
-                        findings.append(
-                            Finding(
-                                id=rule.id,
-                                title=rule.title,
-                                severity=rule.severity,
-                                category=rule.category,
-                                file_path=str(fp),
-                                line=lineno,
-                                message=rule.message or f"Pattern matched on line {lineno}",
-                                recommendation=rule.recommendation,
-                                confidence=rule.confidence,
-                            )
+        compiled = [_compile_pattern(p, rule.match_mode) for p in rule.patterns]
+        lines = content.splitlines()
+
+        for lineno, line in enumerate(lines, start=1):
+            for pat in compiled:
+                if pat.search(line):
+                    findings.append(
+                        Finding(
+                            id=rule.id,
+                            title=rule.title,
+                            severity=rule.severity,
+                            category=rule.category,
+                            file_path=str(fp),
+                            line=lineno,
+                            message=rule.message or f"Pattern matched on line {lineno}",
+                            recommendation=rule.recommendation,
+                            confidence=rule.confidence,
                         )
-                        break  # one match per line per rule
+                    )
+                    break  # one match per line per rule
 
     return findings

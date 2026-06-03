@@ -1,0 +1,177 @@
+rules:
+  # --- Docker ---
+  - id: docker-run-as-root
+    title: Container running as root
+    severity: high
+    category: infrastructure
+    patterns:
+      - "USER root"
+      - "USER 0"
+    file_patterns:
+      - "Dockerfile"
+      - "Dockerfile.*"
+      - "*.dockerfile"
+    message: "Container is configured to run as root user."
+    recommendation: "Create a non-root user and switch to it with USER directive."
+    confidence: high
+
+  - id: docker-expose-ssh
+    title: SSH port exposed
+    severity: critical
+    category: infrastructure
+    patterns:
+      - "EXPOSE 22"
+    file_patterns:
+      - "Dockerfile"
+      - "Dockerfile.*"
+      - "*.dockerfile"
+    message: "SSH port (22) is exposed in the Dockerfile."
+    recommendation: "Remove SSH exposure. Use docker exec or similar for debugging."
+    confidence: high
+
+  - id: docker-curl-bash-install
+    title: Curl-pipe-bash pattern detected
+    severity: critical
+    category: infrastructure
+    patterns:
+      - "curl"
+      - "bash"
+      - "|"
+    file_patterns:
+      - "Dockerfile"
+      - "Dockerfile.*"
+      - "*.dockerfile"
+    message: "curl | bash pattern detected in Dockerfile (potential remote code execution)."
+    recommendation: "Download and verify checksums instead of piping remote scripts to bash."
+    confidence: medium
+
+  - id: docker-missing-healthcheck
+    title: No HEALTHCHECK instruction
+    severity: low
+    category: infrastructure
+    file_patterns:
+      - "Dockerfile"
+      - "Dockerfile.*"
+    message: "Dockerfile has no HEALTHCHECK instruction."
+    recommendation: "Add a HEALTHCHECK to enable container orchestration health monitoring."
+    confidence: medium
+
+  - id: docker-latest-tag
+    title: Using :latest tag
+    severity: medium
+    category: infrastructure
+    match_mode: case_insensitive_contains
+    patterns:
+      - "FROM node:latest"
+      - "FROM python:latest"
+      - "FROM ruby:latest"
+      - "FROM java:latest"
+      - "FROM golang:latest"
+      - "FROM php:latest"
+      - "FROM nginx:latest"
+      - "FROM alpine:latest"
+      - "FROM ubuntu:latest"
+    file_patterns:
+      - "Dockerfile"
+      - "Dockerfile.*"
+      - "*.dockerfile"
+    message: "Using ':latest' tag in FROM instruction."
+    recommendation: "Pin to a specific version tag for reproducible builds."
+    confidence: high
+
+  # --- Docker Compose ---
+  - id: compose-privileged-mode
+    title: Privileged container in docker-compose
+    severity: critical
+    category: infrastructure
+    patterns:
+      - "privileged: true"
+    file_patterns:
+      - "docker-compose.yml"
+      - "docker-compose.yaml"
+      - "docker-compose.*.yml"
+      - "docker-compose.*.yaml"
+      - "compose.yml"
+      - "compose.yaml"
+    message: "A service is running in privileged mode."
+    recommendation: "Remove privileged: true and use specific capabilities instead."
+    confidence: high
+
+  - id: compose-host-network
+    title: Host network mode in docker-compose
+    severity: high
+    category: infrastructure
+    patterns:
+      - "network_mode: host"
+    file_patterns:
+      - "docker-compose.yml"
+      - "docker-compose.yaml"
+      - "docker-compose.*.yml"
+      - "docker-compose.*.yaml"
+      - "compose.yml"
+      - "compose.yaml"
+    message: "Service uses host network mode."
+    recommendation: "Use bridge networking with explicit port mappings."
+    confidence: high
+
+  - id: compose-writable-filesystem
+    title: Writable root filesystem in docker-compose
+    severity: medium
+    category: infrastructure
+    patterns:
+      - "read_only: false"
+    file_patterns:
+      - "docker-compose.yml"
+      - "docker-compose.yaml"
+      - "docker-compose.*.yml"
+      - "docker-compose.*.yaml"
+      - "compose.yml"
+      - "compose.yaml"
+    message: "Container root filesystem is writable."
+    recommendation: "Set read_only: true and use tmpfs for writable directories."
+    confidence: medium
+
+  # --- Nginx ---
+  - id: nginx-server-tokens
+    title: Nginx server_tokens not disabled
+    severity: medium
+    category: infrastructure
+    match_mode: case_insensitive_contains
+    patterns:
+      - "server_tokens off"
+    file_patterns:
+      - "nginx.conf"
+      - "*.conf"
+    message: "server_tokens is not explicitly disabled in Nginx config."
+    recommendation: "Add 'server_tokens off;' in http/server block to hide version."
+    confidence: low
+
+  # --- CI/CD ---
+  - id: github-actions-script-injection
+    title: Possible GitHub Actions script injection
+    severity: high
+    category: infrastructure
+    patterns:
+      - "${{ github.event"
+      - "${{ github.head_ref"
+    file_patterns:
+      - "*.yml"
+    message: "Untrusted context used in GitHub Actions workflow."
+    recommendation: "Use environment variables instead of direct expression interpolation."
+    confidence: medium
+    languages:
+      - yaml
+
+  - id: github-actions-persist-credentials
+    title: GitHub Actions persisting credentials
+    severity: medium
+    category: infrastructure
+    patterns:
+      - "persist-credentials: true"
+    file_patterns:
+      - "*.yml"
+    message: "Git credentials persisted in GitHub Actions checkout."
+    recommendation: "Set persist-credentials: false for actions/checkout."
+    confidence: high
+    languages:
+      - yaml

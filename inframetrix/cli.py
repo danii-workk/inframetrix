@@ -6,21 +6,32 @@ from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
+from rich.console import Console
 
+from inframetrix import __version__
 from inframetrix.scanner import scan_project
 
 app = typer.Typer(
     name="inframetrix",
     help="Security, architecture, and infrastructure risk analyzer for AI-built projects.",
     no_args_is_help=True,
+    rich_markup_mode="rich",
 )
 
 SEVERITY_ORDER = ["low", "medium", "high", "critical"]
 
 
 @app.callback(invoke_without_command=True)
-def main() -> None:
+def main(
+    version: Annotated[
+        bool,
+        typer.Option("--version", "-v", help="Show version and exit."),
+    ] = False,
+) -> None:
     """InfraMetrix - Security, architecture, and infrastructure risk analyzer for AI-built projects."""
+    if version:
+        typer.echo(f"inframetrix {__version__}")
+        raise typer.Exit()
 
 
 @app.command()
@@ -45,6 +56,10 @@ def scan(
             help="Exit code 1 if risk level >= threshold: low, medium, high, critical, never.",
         ),
     ] = "critical",
+    no_color: Annotated[
+        bool,
+        typer.Option("--no-color", help="Disable colored output."),
+    ] = False,
 ) -> None:
     """Scan a project directory for security, architecture, and AI-slop risks."""
     project_path = Path(path)
@@ -61,16 +76,22 @@ def scan(
         from inframetrix.reporters.json_report import render_json
 
         output_path = Path(output) if output else None
-        render_json(report, output_path)
+        result = render_json(report, output_path)
+        if output_path is None:
+            console = Console(no_color=no_color)
+            console.print(result)
     elif format == "markdown":
         from inframetrix.reporters.markdown import render_markdown
 
         output_path = Path(output) if output else None
-        render_markdown(report, output_path)
+        result = render_markdown(report, output_path)
+        if output_path is None:
+            console = Console(no_color=no_color)
+            console.print(result)
     else:
         from inframetrix.reporters.console import render_console
 
-        render_console(report)
+        render_console(report, no_color=no_color)
 
     # Fail-on logic
     if fail_on != "never":
