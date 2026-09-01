@@ -83,26 +83,37 @@ def render_console(report: dict, *, no_color: bool = False) -> None:
         console.print(f"  Summary: {' | '.join(summary_parts)}")
         console.print()
 
-    table = Table(show_header=True, header_style="bold", show_lines=True)
-    table.add_column("Severity", width=10)
-    table.add_column("Title", min_width=20)
-    table.add_column("File", min_width=16)
-    table.add_column("Line", width=6, justify="right")
-    table.add_column("Message", min_width=30)
-    table.add_column("Recommendation", min_width=20)
+    table = Table(
+        show_header=True,
+        header_style="bold cyan",
+        show_lines=True,
+        expand=True,
+    )
+    table.add_column("Severity", width=10, justify="center", no_wrap=True)
+    table.add_column("Title", ratio=2, overflow="fold", no_wrap=False)
+    table.add_column("Location", ratio=2, overflow="fold", no_wrap=False)
+    table.add_column("Line", width=6, justify="right", no_wrap=True)
+    table.add_column("Message & Recommendation", ratio=4, overflow="fold", no_wrap=False)
 
     project_path = report.get("path", "")
 
     for f in findings:
         sev_color = SEVERITY_COLORS.get(f.severity, "white")
-        rel_file = _relative_path(f.file_path or "", project_path)
+        rel_file = _relative_path(f.file_path or f.url or f.package_name or "-", project_path)
+
+        # Combine message and recommendation cleanly so both are always visible and wrapped
+        msg_text = Text()
+        msg_text.append(f.message or f.description or "")
+        if f.recommendation:
+            msg_text.append("\n💡 Fix: ", style="bold green")
+            msg_text.append(f.recommendation, style="italic")
+
         table.add_row(
             Text(f.severity.upper(), style=f"bold {sev_color}"),
             f.title,
             rel_file,
             str(f.line) if f.line else "-",
-            f.message,
-            f.recommendation or "-",
+            msg_text,
         )
 
     console.print(table)
