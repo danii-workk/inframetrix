@@ -10,12 +10,18 @@ from pathlib import Path
 
 from inframetrix.storage.schema import SCHEMA_SQL
 
+DEFAULT_DB_PATH = Path.home() / ".inframetrix" / "inframetrix.db"
+
 
 class DatabaseManager:
     """Thread-safe SQLite connection manager with WAL mode and schema initialization."""
 
-    def __init__(self, db_path: str | Path = ":memory:") -> None:
-        self.db_path = str(db_path)
+    def __init__(self, db_path: str | Path | None = None) -> None:
+        if db_path is None:
+            self.db_path = str(DEFAULT_DB_PATH)
+        else:
+            self.db_path = str(db_path)
+
         if self.db_path != ":memory:":
             Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self._local = threading.local()
@@ -33,6 +39,7 @@ class DatabaseManager:
                 conn.execute("PRAGMA journal_mode=WAL;")
             conn.execute("PRAGMA foreign_keys=ON;")
             conn.execute("PRAGMA busy_timeout=5000;")
+            conn.executescript(SCHEMA_SQL)
             self._local.conn = conn
         return self._local.conn
 

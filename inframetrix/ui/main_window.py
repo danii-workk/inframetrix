@@ -58,6 +58,12 @@ from inframetrix.ui.theme import DARK_STYLE
 from inframetrix.ui.widgets.tool_console import ToolConsoleWidget
 
 
+class EventBridge(QObject):
+    """Bridge routing background ScanEvents into main Qt event loop."""
+
+    event_received = Signal(object) if callable(Signal) else None
+
+
 class ScanWorker(QThread):
     """Background scanning thread executing scan orchestration without blocking UI."""
 
@@ -101,8 +107,16 @@ class MainWindow(QMainWindow):
 
         # 1. Initialize Core Services
         self.db = DatabaseManager()
+        self.event_bridge = EventBridge()
+        if self.event_bridge.event_received:
+            self.event_bridge.event_received.connect(self._handle_ui_scan_event)
+
         self.event_bus = EventBus()
-        self.event_bus.subscribe(self._on_scan_event)
+        self.event_bus.subscribe(
+            lambda ev: self.event_bridge.event_received.emit(ev)
+            if self.event_bridge.event_received
+            else None
+        )
 
         self.registry = self._build_tool_registry()
         self.scan_service = ScanService(db=self.db, registry=self.registry, event_bus=self.event_bus)
@@ -305,7 +319,8 @@ class MainWindow(QMainWindow):
             self.scan_service.finding_repo.update_status(finding_id, status=new_status)
             self._refresh_all_views()
 
-    def _on_scan_event(self, event: ScanEvent) -> None:
+    @Slot(object)
+    def _handle_ui_scan_event(self, event: ScanEvent) -> None:
         msg = f"[{event.event_type.upper()}] {event.message}"
         self.tool_console.append_log(msg)
 
