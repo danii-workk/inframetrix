@@ -51,6 +51,9 @@ Issues = "https://github.com/danii-workk/inframetrix/issues"
 [tool.ruff]
 line-length = 100
 
+[tool.mypy]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

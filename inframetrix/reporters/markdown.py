@@ -47,6 +47,7 @@ def render_markdown(report: dict, output_path: Path | None = None) -> str:
     text = "\n".join(lines)
 
     if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(text, encoding="utf-8")
 
     return text

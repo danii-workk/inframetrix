@@ -95,7 +95,7 @@ def render_console(report: dict, *, no_color: bool = False) -> None:
 
     for f in findings:
         sev_color = SEVERITY_COLORS.get(f.severity, "white")
-        rel_file = _relative_path(f.file_path, project_path)
+        rel_file = _relative_path(f.file_path or "", project_path)
         table.add_row(
             Text(f.severity.upper(), style=f"bold {sev_color}"),
             f.title,

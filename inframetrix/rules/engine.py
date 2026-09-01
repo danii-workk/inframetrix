@@ -14,8 +14,12 @@ _EXT_TO_LANG: dict[str, str] = {
     ".py": "python",
     ".js": "javascript",
     ".jsx": "javascript",
+    ".mjs": "javascript",
+    ".cjs": "javascript",
     ".ts": "typescript",
     ".tsx": "typescript",
+    ".mts": "typescript",
+    ".cts": "typescript",
     ".json": "json",
     ".yaml": "yaml",
     ".yml": "yaml",
@@ -24,24 +28,29 @@ _EXT_TO_LANG: dict[str, str] = {
     ".example": "dotenv",
     ".txt": "text",
     ".md": "markdown",
+    ".sh": "shell",
+    ".bash": "shell",
+    ".zsh": "shell",
 }
 
 
 def _file_matches_patterns(filepath: Path, patterns: list[str]) -> bool:
     """Check if a filename matches any of the given glob patterns."""
-    name = filepath.name
-    return any(fnmatch.fnmatch(name, p) for p in patterns)
+    name = filepath.name.lower()
+    return any(fnmatch.fnmatch(name, p.lower()) for p in patterns)
 
 
 def _compile_pattern(pattern: str, match_mode: str) -> re.Pattern[str]:
     """Compile a pattern string based on match mode."""
+    if match_mode == "regex":
+        return re.compile(pattern)
     flags = re.IGNORECASE if match_mode == "case_insensitive_contains" else 0
     return re.compile(re.escape(pattern), flags)
 
 
 def _detect_language(filepath: Path) -> str:
     """Detect the language of a file based on its extension."""
-    return _EXT_TO_LANG.get(filepath.suffix, "")
+    return _EXT_TO_LANG.get(filepath.suffix.lower(), "")
 
 
 def evaluate_rules(

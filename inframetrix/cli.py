@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -18,7 +18,7 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
-SEVERITY_ORDER = ["low", "medium", "high", "critical"]
+SEVERITY_ORDER = ["info", "low", "medium", "high", "critical"]
 
 
 @app.callback(invoke_without_command=True)
@@ -37,23 +37,27 @@ def main(
 @app.command()
 def scan(
     path: Annotated[str, typer.Argument(help="Path to the project directory to scan.")],
+    preset: Annotated[
+        str,
+        typer.Option("--preset", "-p", help="Scan preset: quick, full, web."),
+    ] = "quick",
     format: Annotated[
         str,
-        typer.Option("--format", "-f", help="Output format: console, json, markdown."),
+        typer.Option("--format", "-f", help="Output format: console, json, markdown, sarif, html."),
     ] = "console",
     output: Annotated[
-        Optional[str],
-        typer.Option("--output", "-o", help="Output file path for json or markdown reports."),
+        str | None,
+        typer.Option("--output", "-o", help="Output file path for json, markdown, sarif or html reports."),
     ] = None,
     rules: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--rules", help="Path to a directory of YAML ruleset files."),
     ] = None,
     fail_on: Annotated[
         str,
         typer.Option(
             "--fail-on",
-            help="Exit code 1 if risk level >= threshold: low, medium, high, critical, never.",
+            help="Exit code 1 if risk level >= threshold: info, low, medium, high, critical, never.",
         ),
     ] = "critical",
     no_color: Annotated[
@@ -99,8 +103,33 @@ def scan(
             typer.echo(f"Error: invalid --fail-on value '{fail_on}'.", err=True)
             raise typer.Exit(code=1)
 
+        # Do not fail if there are no findings
+        if not report.get("findings") or report.get("risk_score", 0) == 0:
+            return
+
         threshold = SEVERITY_ORDER.index(fail_on)
         level_index = SEVERITY_ORDER.index(report["risk_level"]) if report["risk_level"] in SEVERITY_ORDER else -1
 
         if level_index >= threshold:
             raise typer.Exit(code=1)
+
+
+@app.command()
+def ui(
+    project: Annotated[
+        str | None,
+        typer.Option("--project", "-p", help="Initial project path to open in GUI."),
+    ] = None,
+) -> None:
+    """Launch the InfraMetrix Desktop AppSec Workstation (PySide6 GUI)."""
+    try:
+        from inframetrix.ui.app import launch_app  # type: ignore[import-not-found]
+
+        launch_app(initial_project=project)
+    except ImportError as exc:
+        typer.echo(
+            f"PySide6 desktop dependencies not found ({exc}).\n"
+            "Install desktop dependencies with: pip install \"inframetrix[desktop]\" or pip install PySide6",
+            err=True,
+        )
+        raise typer.Exit(code=1) from exc

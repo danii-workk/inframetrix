@@ -19,7 +19,7 @@ class Rule(BaseModel):
     message: str = ""
     recommendation: str | None = None
     confidence: Literal["low", "medium", "high"] = "medium"
-    match_mode: Literal["contains", "case_insensitive_contains"] = "contains"
+    match_mode: Literal["contains", "case_insensitive_contains", "regex"] = "contains"
     languages: list[str] = []
 
 

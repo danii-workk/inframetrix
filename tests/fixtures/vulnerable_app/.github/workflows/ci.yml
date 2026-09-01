@@ -1,0 +1,10 @@
+name: CI Pipeline
+on: issues
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+      - run: echo "Issue ${{ github.event.issue.title }}"
