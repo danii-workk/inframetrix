@@ -275,6 +275,7 @@ class MainWindow(QMainWindow):
 
     def start_scan(self, preset: str = "quick") -> None:
         if not self.active_project:
+            self.tool_console.append_log("[!] Please select or open a project first (Projects tab).")
             return
 
         self.cancellation_token = CancellationToken()
