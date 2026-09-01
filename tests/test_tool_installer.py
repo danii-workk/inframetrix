@@ -5,7 +5,6 @@ from inframetrix.services.tool_installer import BIN_DIR, ToolInstallerService, e
 
 def test_tool_installer_get_installable():
     tools = ToolInstallerService.get_installable_tools()
-    assert "semgrep" in tools
     assert "gitleaks" in tools
     assert "osv-sca" in tools
     assert "syft" in tools

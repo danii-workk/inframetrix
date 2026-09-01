@@ -36,6 +36,8 @@ class ToolInstallerService:
 
     @classmethod
     def get_installable_tools(cls) -> list[str]:
+        if platform.system().lower() == "windows":
+            return ["gitleaks", "osv-sca", "syft"]
         return ["semgrep", "gitleaks", "osv-sca", "syft"]
 
     @classmethod
@@ -63,6 +65,15 @@ class ToolInstallerService:
 
     @classmethod
     def _install_semgrep(cls, progress_cb: Callable[[int, str], None] | None) -> bool:
+        system = platform.system().lower()
+        if system == "windows":
+            if progress_cb:
+                progress_cb(
+                    0,
+                    "Semgrep officially requires WSL / Linux on Windows. Built-in Native SAST is used instead.",
+                )
+            return False
+
         if progress_cb:
             progress_cb(10, "Installing semgrep via pip...")
         try:
